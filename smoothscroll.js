@@ -46,12 +46,20 @@ var position = function(start, end, elapsed, duration) {
     // return start + (end - start) * (elapsed / duration); // <-- this would give a linear scroll
 }
 
+var _shouldStopScrolling = false;
+var _isSmoothScrolling;
+
+var stopScrolling = function() {
+    _shouldStopScrolling = Boolean(_isSmoothScrolling);
+}
+
 // we use requestAnimationFrame to be called by the browser before every repaint
 // if the first argument is an element then scroll to the top of this element
 // if the first argument is numeric then scroll to this location
 // if the callback exist, it is called when the scrolling is finished
 // if context is set then scroll that element, else scroll window
 var smoothScroll = function(el, duration, callback, context){
+    _isSmoothScrolling = true;
     duration = duration || 500;
     context = context || window;
     var start = context.scrollTop || window.pageYOffset;
@@ -76,7 +84,9 @@ var smoothScroll = function(el, duration, callback, context){
           window.scroll(0, position(start, end, elapsed, duration));
         }
 
-        if (elapsed > duration) {
+        if (elapsed > duration || _shouldStopScrolling) {
+            _shouldStopScrolling = false;
+            _isSmoothScrolling = false;
             if (typeof callback === 'function') {
                 callback(el);
             }
@@ -115,6 +125,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // return smoothscroll API
-return smoothScroll;
+return {
+    smoothScroll,
+    stopScrolling,
+};
 
 });
